@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>טיק טאק טו</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap');
+
+    body {
+      background-color: #1a1a1a; /* צבע רקע כהה */
+      color: #fff;
+      font-family: 'Metal Mania', cursive;
+      text-align: center;
+      background-image: url('background.jpg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #game-container {
+      width: 90vw;
+      max-width: 500px;
+      background: linear-gradient(145deg, #1a1a1a, #333);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin: 20px auto;
+      width: fit-content;
+    }
+
+    .cell {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3em;
+      background: linear-gradient(145deg, #222, #444);
+      color: #fff;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      user-select: none;
+    }
+
+    .cell.x {
+      background: linear-gradient(145deg, #8b0000, #ff6347);
+      border: 2px solid red;
+    }
+
+    .cell.o {
+      background: linear-gradient(145deg, #00008b, #1e90ff);
+      border: 2px solid blue;
+    }
+
+    .cell:hover {
+      box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
+    }
+
+    .cell.hover-x:hover {
+      box-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.8);
+      background: linear-gradient(145deg, #8b0000, #ff6347);
+    }
+
+    .cell.hover-o:hover {
+      box-shadow: 0 0 20px 5px rgba(0, 0, 255, 0.8);
+      background: linear-gradient(145deg, #00008b, #1e90ff);
+    }
+
+    button {
+      background: linear-gradient(145deg, #3a3a3a, #555);
+      color: #fff;
+      padding: 20px 40px;
+      border: 2px solid #666;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 10px;
+      font-family: 'Metal Mania', cursive;
+      text-transform: uppercase;
+      font-size: 1.5em;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    button:hover {
+      background-color: #ff0000;
+      color: #fff;
+      box-shadow: 0 0 10px #ff0000;
+    }
+
+    input[type='range'] {
+      width: 80%;
+      margin-top: 10px;
+    }
+
+    h1 {
+      font-family: 'Metal Mania', cursive;
+      font-size: 5em;
+      color: #fff;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    #status {
+      font-size: 1.5em;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #333;
+      color: #fff;
+      border-radius: 5px;
+    }
+
+    #timer {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    #timer.low-time {
+      color: red;
+      font-weight: bold;
+      font-size: 2.5em;
+    }
+
+    #win-message {
+      font-size: 1.8em;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #333;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .win-message-x {
+      color: red; /* צבע להודעת ניצחון עבור שחקן X */
+    }
+
+    .win-message-o {
+      color: blue; /* צבע להודעת ניצחון עבור שחקן O */
+    }
+
+    /* מסגרת מחולקת עם צבעים ניאוניים */
+    #game-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, red, red 50%, blue 50%, blue);
+      z-index: -1;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), 0 0 30px rgba(0, 0, 255, 0.8);
+    }
+
+    /* סגנון לחלון ההסברים */
+    #instructions-modal {
+      display: none; /* מוסתר ברירת מחדל */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      z-index: 10;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    #instructions-modal h2 {
+      margin-top: 0;
+    }
+
+    #close-modal {
+      background: #ff0000;
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* שכבת רקע חלונית ההסברים */
+    #modal-overlay {
+      display: none; /* מוסתר ברירת מחדל */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Tic Tac Toe</h1>
+    <p id="status">Player X's Turn</p>
+    <div id="board"></div>
+    <p id="timer">30</p>
+    <p id="win-message" style="display: none;"></p>
+    <button onclick="startGame()">New Game</button>
+    <button onclick="toggleMusic()">Play/Pause Music</button>
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
+    <button onclick="showInstructions()">Instructions</button>
+  </div>
+
+  <!-- שכבת רקע לחלון ההסברים -->
+  <div id="modal-overlay"></div>
+
+  <!-- חלון ההסברים באנגלית -->
+  <div id="instructions-modal">
+    <button id="close-modal" onclick="hideInstructions()">X</button>
+    <h2>How to Play Tic Tac Toe</h2>
+    <p>
+      Welcome to Tic Tac Toe! The game is played on a 3x3 grid. Players take turns placing their mark (X or O) in empty squares. The first player to get three of their marks in a horizontal, vertical, or diagonal row wins the game. If all squares are filled and no player has three in a row, the game ends in a draw.
+    </p>
+  </div>
+
+  <script>
+    let board, currentPlayer, gameActive, countdown, timeLeft;
+
+    // הגדרת הצלילים
+    const winSound = new Audio('game win.wav');
+    const loseSound = new Audio('game lose.wav');
+    const drawSound = new Audio('draw.wav'); // הוספת צליל תיקו
+    const tickSound = new Audio('clock.wav');
+    const backgroundMusic = new Audio('music.wav');
+
+    // הנמכת הצליל של ההפסד ב-5 דציבלים
+    loseSound.volume = 0.3162; // הנמכת הצליל ב-5 דציבלים
+
+    // הגדרת המוזיקה לרצף
+    backgroundMusic.loop = true;
+
+    // שליטה על עוצמת המוזיקה
+    document.getElementById('volumeSlider').addEventListener('input', (e) => {
+      backgroundMusic.volume = e.target.value;
+    });
+
+    // פונקציה להפעיל/להפסיק את המוזיקה
+    function toggleMusic() {
+      if (backgroundMusic.paused) {
+        backgroundMusic.play();
+      } else {
+        backgroundMusic.pause();
+      }
+    }
+
+    // פונקציה להראות את חלון ההסברים
+    function showInstructions() {
+      document.getElementById('modal-overlay').style.display = 'block';
+      document.getElementById('instructions-modal').style.display = 'block';
+    }
+
+    // פונקציה להסתיר את חלון ההסברים
+    function hideInstructions() {
+      document.getElementById('modal-overlay').style.display = 'none';
+      document.getElementById('instructions-modal').style.display = 'none';
+    }
+
+    // פונקציית התחלת המשחק
+    function startGame() {
+      board = Array(9).fill(null);
+      currentPlayer = 'X';
+      gameActive = true;
+      document.getElementById('status').textContent = `Player ${currentPlayer}'s Turn`;
+      const winMessage = document.getElementById('win-message');
+      winMessage.style.display = 'none';
+      winMessage.className = ''; // איפוס המחלקות
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = '';
+      board.forEach((_, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.addEventListener('click', () => makeMove(i));
+
+        // הוספת מעמד מתאים בעת העכבר
+        cell.addEventListener('mouseover', () => {
+          if (gameActive && !board[i]) {
+            cell.classList.add(currentPlayer === 'X' ? 'hover-x' : 'hover-o');
+          }
+        });
+
+        cell.addEventListener('mouseout', () => {
+          cell.classList.remove('hover-x', 'hover-o');
+        });
+
+        boardDiv.appendChild(cell);
+      });
+      resetTimer();
+    }
+
+    // פונקציית ביצוע מהלך
+    function makeMove(index) {
+      if (!gameActive || board[index]) return;
+      board[index] = currentPlayer;
+      const cell = document.getElementsByClassName('cell')[index];
+      cell.textContent = currentPlayer;
+
+      // השמעת הצליל המתאים
+      const sound = new Audio(currentPlayer === 'X' ? 'X.wav' : 'O.wav');
+      sound.play();
+
+      // צביעת ה-X או ה-O בצבע המתאים
+      cell.style.color = currentPlayer === 'X' ? 'red' : 'blue';
+
+      // בדיקת ניצחון
+      if (checkWin()) {
+        endGame(false);
+        return;
+      }
+
+      // בדיקת תיקו
+      if (!board.includes(null)) {
+        endGame(true);
+        return;
+      }
+
+      // החלפת שחקן
+      switchPlayer();
+      resetTimer();
+    }
+
+    // פונקציית החלפת שחקן
+    function switchPlayer() {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      document.getElementById('status').textContent = `Player ${currentPlayer}'s Turn`;
+    }
+
+    // פונקציית בדיקת ניצחון
+    function checkWin() {
+      const winPatterns = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+      ];
+      return winPatterns.some(pattern => pattern.every(index => board[index] === currentPlayer));
+    }
+
+    // פונקציית סיום המשחק
+    function endGame(isTie) {
+      gameActive = false;
+      clearInterval(countdown);
+      const winMessage = document.getElementById('win-message');
+
+      if (isTie) {
+        winMessage.textContent = "It's a draw!"; // שינוי הודעת התיקו לאנגלית
+        winMessage.className = '';
+        drawSound.play(); // השמעת צליל תיקו
+      } else {
+        winMessage.textContent = `${currentPlayer} Wins!`;
+        winMessage.className = currentPlayer === 'X' ? 'win-message-x' : 'win-message-o';
+        winSound.play(); // השמעת צליל ניצחון
+      }
+
+      winMessage.style.display = 'block';
+    }
+
+    // פונקציית איפוס הטיימר
+    function resetTimer() {
+      clearInterval(countdown);
+      timeLeft = 30;
+      const timerDisplay = document.getElementById('timer');
+      timerDisplay.classList.remove('low-time');
+      timerDisplay.textContent = timeLeft;
+      countdown = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 10) {
+          timerDisplay.classList.add('low-time');
+          tickSound.cloneNode().play(); // השמעת צליל כל שניה
+        } else {
+          timerDisplay.classList.remove('low-time');
+        }
+        timerDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    // פונקציית טיפול בפספוס זמן
+    function handleTimeout() {
+      if (!gameActive) return;
+      gameActive = false;
+      loseSound.play(); // השמעת הצליל להפסד
+      const winMessage = document.getElementById('win-message');
+      const winner = currentPlayer === 'X' ? 'O' : 'X';
+      winMessage.textContent = `Player ${currentPlayer} ran out of time! Player ${winner} Wins!`;
+      winMessage.style.display = 'block';
+      winMessage.className = `win-message-${winner.toLowerCase()}`; // צביעת הודעת הניצחון
+    }
+
+    // אתחול המשחק בעת טעינת הדף
+    window.onload = () => {
+      startGame();
+    };
+  </script>
+</body>
+</html>
